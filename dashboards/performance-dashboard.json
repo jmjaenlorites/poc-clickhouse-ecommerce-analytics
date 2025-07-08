@@ -1,0 +1,557 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "value"
+                    },
+                    "custom": {
+                        "align": "center",
+                        "displayMode": "color-background",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 100
+                            },
+                            {
+                                "color": "red",
+                                "value": 500
+                            }
+                        ]
+                    },
+                    "unit": "ms"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "showHeader": true
+            },
+            "pluginVersion": "9.5.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    method AS \"Method\",\n    endpoint AS \"Endpoint\",\n    round(avg(response_time_ms), 2) AS \"Avg Response Time\",\n    round(quantile(0.50)(response_time_ms), 2) AS \"P50\",\n    round(quantile(0.95)(response_time_ms), 2) AS \"P95\",\n    round(quantile(0.99)(response_time_ms), 2) AS \"P99\",\n    count() AS \"Requests\"\nFROM analytics.request_metrics\nWHERE timestamp >= now() - INTERVAL 1 HOUR\nGROUP BY method, endpoint\nORDER BY \"Avg Response Time\" DESC\nLIMIT 20",
+                    "refId": "A"
+                }
+            ],
+            "title": "Response Time by Endpoint",
+            "type": "table"
+        },
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "vis": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "reqps"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            },
+            "id": 2,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    toStartOfMinute(timestamp) AS time,\n    service_name,\n    count() / 60 AS throughput\nFROM analytics.request_metrics\nWHERE timestamp >= now() - INTERVAL 2 HOUR\nGROUP BY time, service_name\nORDER BY time",
+                    "refId": "A"
+                }
+            ],
+            "title": "Throughput by Service",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "vis": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "reqps"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Error Rate"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "red",
+                                    "mode": "fixed"
+                                }
+                            },
+                            {
+                                "id": "unit",
+                                "value": "percent"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 10
+            },
+            "id": 3,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    toStartOfMinute(timestamp) AS time,\n    countIf(status_code >= 400) / count() * 100 AS \"Error Rate\",\n    countIf(status_code >= 400) / 60 AS \"Errors per Minute\"\nFROM analytics.request_metrics\nWHERE timestamp >= now() - INTERVAL 2 HOUR\nGROUP BY time\nORDER BY time",
+                    "refId": "A"
+                }
+            ],
+            "title": "Error Rate & Errors per Minute",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "vis": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "percent"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 10
+            },
+            "id": 4,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    toStartOfMinute(timestamp) AS time,\n    service_name,\n    avg(metric_value) AS cpu_usage\nFROM analytics.system_metrics\nWHERE timestamp >= now() - INTERVAL 2 HOUR\n  AND metric_name = 'cpu_usage_percent'\nGROUP BY time, service_name\nORDER BY time",
+                    "refId": "A"
+                }
+            ],
+            "title": "CPU Usage by Service",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "vis": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "decmbytes"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 18
+            },
+            "id": 5,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    toStartOfMinute(timestamp) AS time,\n    service_name,\n    avg(metric_value) AS memory_usage_mb\nFROM analytics.system_metrics\nWHERE timestamp >= now() - INTERVAL 2 HOUR\n  AND metric_name = 'memory_usage_mb'\nGROUP BY time, service_name\nORDER BY time",
+                    "refId": "A"
+                }
+            ],
+            "title": "Memory Usage by Service",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Error Rate %"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "continuous-GrYlRd"
+                                }
+                            },
+                            {
+                                "id": "custom.displayMode",
+                                "value": "color-background"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 18
+            },
+            "id": 6,
+            "options": {
+                "showHeader": true
+            },
+            "pluginVersion": "9.5.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    method AS \"Method\",\n    endpoint AS \"Endpoint\",\n    count() AS \"Total Requests\",\n    countIf(status_code >= 400) AS \"Errors\",\n    round(countIf(status_code >= 400) / count() * 100, 2) AS \"Error Rate %\",\n    round(avg(response_time_ms), 2) AS \"Avg Latency (ms)\"\nFROM analytics.request_metrics\nWHERE timestamp >= now() - INTERVAL 1 HOUR\nGROUP BY method, endpoint\nHAVING count() > 10\nORDER BY \"Error Rate %\" DESC, \"Total Requests\" DESC\nLIMIT 15",
+                    "refId": "A"
+                }
+            ],
+            "title": "Endpoint Error Analysis",
+            "type": "table"
+        }
+    ],
+    "refresh": "10s",
+    "schemaVersion": 37,
+    "style": "dark",
+    "tags": [
+        "clickhouse",
+        "analytics",
+        "performance"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-2h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "ClickHouse Analytics - Performance",
+    "uid": "performance",
+    "version": 1,
+    "weekStart": ""
+}

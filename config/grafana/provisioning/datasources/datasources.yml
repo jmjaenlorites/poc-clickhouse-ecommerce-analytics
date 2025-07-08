@@ -1,0 +1,32 @@
+apiVersion: 1
+
+datasources:
+  - name: ClickHouse
+    uid: clickhouse
+    type: vertamedia-clickhouse-datasource
+    access: proxy
+    url: http://clickhouse:8123
+    database: analytics
+    user: default
+    secureJsonData:
+      password: ""
+    jsonData:
+      defaultDatabase: analytics
+      usePOST: false
+      addCorsHeader: true
+      useCompression: false
+    isDefault: true
+    editable: true
+
+  - name: PostgreSQL
+    uid: postgresql
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: business
+    user: postgres
+    secureJsonData:
+      password: postgres
+    jsonData:
+      sslmode: disable
+    editable: true 

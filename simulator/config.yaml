@@ -1,0 +1,145 @@
+# Client Simulator Configuration
+
+simulation:
+  workers: 5                      # Number of concurrent workers
+  requests_per_second: 50         # Target RPS across all workers
+  duration_minutes: 60            # How long to run simulation (0 = infinite)
+  ramp_up_seconds: 30             # Gradual ramp up period
+  
+# User behavior types
+user_types:
+  - name: "normal_user"
+    weight: 70                    # 70% of users
+    requests_per_session: [3, 8]  # Min/max requests per session
+    session_duration_minutes: [5, 15]  # Min/max session duration
+    think_time_seconds: [1, 5]    # Pause between requests
+    
+  - name: "power_user"
+    weight: 25                    # 25% of users
+    requests_per_session: [10, 25]
+    session_duration_minutes: [10, 30]
+    think_time_seconds: [0.5, 3]
+    
+  - name: "browser_user"
+    weight: 5                     # 5% of users (just browsing)
+    requests_per_session: [1, 3]
+    session_duration_minutes: [1, 5]
+    think_time_seconds: [2, 10]
+
+# API endpoints configuration
+endpoints:
+  crud_service:
+    base_url: "http://crud-api:8000"
+    endpoints:
+      - path: "/users"
+        methods: ["GET"]
+        weight: 25
+        user_types: ["normal_user", "power_user", "browser_user"]
+        
+      - path: "/users"
+        methods: ["POST"]
+        weight: 5
+        user_types: ["normal_user", "power_user"]
+        payload_generator: "create_user"
+        
+      - path: "/products"
+        methods: ["GET"]
+        weight: 30
+        user_types: ["normal_user", "power_user", "browser_user"]
+        
+      - path: "/products"
+        methods: ["POST"]
+        weight: 3
+        user_types: ["power_user"]
+        payload_generator: "create_product"
+        
+      - path: "/products/{id}"
+        methods: ["GET"]
+        weight: 20
+        user_types: ["normal_user", "power_user", "browser_user"]
+        path_generator: "product_id"
+
+  ecommerce_service:
+    base_url: "http://ecommerce-api:8000"
+    endpoints:
+      - path: "/cart"
+        methods: ["GET"]
+        weight: 15
+        user_types: ["normal_user", "power_user"]
+        
+      - path: "/cart"
+        methods: ["POST"]
+        weight: 12
+        user_types: ["normal_user", "power_user"]
+        payload_generator: "add_to_cart"
+        
+      - path: "/cart/{item_id}"
+        methods: ["PUT"]
+        weight: 5
+        user_types: ["normal_user", "power_user"]
+        path_generator: "cart_item_id"
+        payload_generator: "update_cart_item"
+        
+      - path: "/checkout"
+        methods: ["POST"]
+        weight: 8
+        user_types: ["normal_user", "power_user"]
+        payload_generator: "checkout"
+        
+      - path: "/orders"
+        methods: ["GET"]
+        weight: 10
+        user_types: ["normal_user", "power_user"]
+        
+      - path: "/orders/{id}"
+        methods: ["GET"]
+        weight: 7
+        user_types: ["normal_user", "power_user"]
+        path_generator: "order_id"
+
+# Geographic distribution simulation
+geographic_distribution:
+  - region: "US-East"
+    weight: 35
+    ip_ranges: ["192.168.1.0/24", "10.0.1.0/24"]
+    
+  - region: "US-West"
+    weight: 25
+    ip_ranges: ["192.168.2.0/24", "10.0.2.0/24"]
+    
+  - region: "EU-West"
+    weight: 20
+    ip_ranges: ["192.168.3.0/24", "10.0.3.0/24"]
+    
+  - region: "EU-Central"
+    weight: 10
+    ip_ranges: ["192.168.4.0/24", "10.0.4.0/24"]
+    
+  - region: "APAC"
+    weight: 7
+    ip_ranges: ["192.168.5.0/24", "10.0.5.0/24"]
+    
+  - region: "LATAM"
+    weight: 3
+    ip_ranges: ["192.168.6.0/24", "10.0.6.0/24"]
+
+# Error simulation (optional)
+error_simulation:
+  enabled: true
+  error_rate: 0.02              # 2% of requests will have simulated issues
+  types:
+    - type: "timeout"
+      probability: 0.4
+      
+    - type: "connection_error"
+      probability: 0.3
+      
+    - type: "retry"
+      probability: 0.3
+      max_retries: 3
+
+# Reporting
+reporting:
+  log_level: "INFO"
+  stats_interval_seconds: 10    # How often to print stats
+  detailed_logging: false       # Log individual requests 

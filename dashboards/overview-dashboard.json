@@ -1,0 +1,549 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "vis": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "reqps"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    toStartOfMinute(timestamp) AS time,\n    service_name,\n    count() / 60 AS requests_per_second\nFROM analytics.request_metrics\nWHERE timestamp >= now() - INTERVAL 1 HOUR\nGROUP BY time, service_name\nORDER BY time",
+                    "refId": "A"
+                }
+            ],
+            "title": "Requests per Second",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "vis": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "ms"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "P95 Latency"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Average Latency"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "blue",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            },
+            "id": 2,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    toStartOfMinute(timestamp) AS time,\n    avg(response_time_ms) AS \"Average Latency\",\n    quantile(0.95)(response_time_ms) AS \"P95 Latency\"\nFROM analytics.request_metrics\nWHERE timestamp >= now() - INTERVAL 1 HOUR\nGROUP BY time\nORDER BY time",
+                    "refId": "A"
+                }
+            ],
+            "title": "Response Time (Average & P95)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "vis": false
+                        }
+                    },
+                    "mappings": [],
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 0,
+                "y": 8
+            },
+            "id": 3,
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "right",
+                    "values": []
+                },
+                "pieType": "pie",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    toString(status_code) AS status_code,\n    count() AS requests\nFROM analytics.request_metrics\nWHERE timestamp >= now() - INTERVAL 1 HOUR\nGROUP BY status_code\nORDER BY requests DESC",
+                    "refId": "A"
+                }
+            ],
+            "title": "Status Code Distribution",
+            "type": "piechart"
+        },
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "bars",
+                        "fillOpacity": 100,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "vis": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 18,
+                "x": 6,
+                "y": 8
+            },
+            "id": 4,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    method AS method,\n    endpoint AS endpoint,\n    count() AS requests\nFROM analytics.request_metrics\nWHERE timestamp >= now() - INTERVAL 1 HOUR\nGROUP BY method, endpoint\nORDER BY requests DESC\nLIMIT 10",
+                    "refId": "A"
+                }
+            ],
+            "title": "Top 10 Endpoints",
+            "type": "barchart"
+        },
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "vis": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "normal"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 16
+            },
+            "id": 5,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    toStartOfMinute(timestamp) AS time,\n    geographic_region,\n    uniq(user_id) AS active_users\nFROM analytics.request_metrics\nWHERE timestamp >= now() - INTERVAL 1 HOUR\nGROUP BY time, geographic_region\nORDER BY time",
+                    "refId": "A"
+                }
+            ],
+            "title": "Active Users by Region",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "vertamedia-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 16
+            },
+            "id": 6,
+            "options": {
+                "showHeader": true
+            },
+            "pluginVersion": "9.5.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "vertamedia-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "queryType": "",
+                    "query": "SELECT\n    service_name AS \"Service\",\n    count() AS \"Total Requests\",\n    countIf(status_code < 400) AS \"Successful\",\n    countIf(status_code >= 400) AS \"Errors\",\n    round(avg(response_time_ms), 2) AS \"Avg Response Time (ms)\",\n    round(quantile(0.95)(response_time_ms), 2) AS \"P95 Response Time (ms)\",\n    uniq(user_id) AS \"Unique Users\"\nFROM analytics.request_metrics\nWHERE timestamp >= now() - INTERVAL 1 HOUR\nGROUP BY service_name\nORDER BY \"Total Requests\" DESC",
+                    "refId": "A"
+                }
+            ],
+            "title": "Service Summary (Last Hour)",
+            "type": "table"
+        }
+    ],
+    "refresh": "10s",
+    "schemaVersion": 37,
+    "style": "dark",
+    "tags": [
+        "clickhouse",
+        "analytics",
+        "overview"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "ClickHouse Analytics - Overview",
+    "uid": "overview",
+    "version": 1,
+    "weekStart": ""
+}

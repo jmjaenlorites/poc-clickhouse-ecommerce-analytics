@@ -1,0 +1,145 @@
+services:
+  # ClickHouse - Analytics Database
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8
+    container_name: clickhouse
+    ports:
+      - "8123:8123"  # HTTP interface
+      - "9000:9000"  # Native client
+    environment:
+      CLICKHOUSE_DB: analytics
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./init/clickhouse:/docker-entrypoint-initdb.d
+    networks:
+      - analytics_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL - Transactional Database
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-business}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - analytics_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Grafana - Dashboard
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: vertamedia-clickhouse-datasource
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: vertamedia-clickhouse-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+      - ./config/grafana.ini:/etc/grafana/grafana.ini
+      - ./dashboards:/var/lib/grafana/dashboards
+    networks:
+      - analytics_network
+    depends_on:
+      - clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # CRUD API Service
+  crud-api:
+    build:
+      context: .
+      dockerfile: ./services/crud-api/Dockerfile
+    container_name: crud-api
+    ports:
+      - "8001:8000"
+    environment:
+      POSTGRES_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-business}
+      CLICKHOUSE_URL: http://clickhouse:8123
+      SERVICE_NAME: crud-api
+    networks:
+      - analytics_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # E-commerce API Service  
+  ecommerce-api:
+    build:
+      context: .
+      dockerfile: ./services/ecommerce-api/Dockerfile
+    container_name: ecommerce-api
+    ports:
+      - "8002:8000"
+    environment:
+      POSTGRES_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-business}
+      CLICKHOUSE_URL: http://clickhouse:8123
+      SERVICE_NAME: ecommerce-api
+    networks:
+      - analytics_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Client Simulator
+  simulator:
+    build: ./simulator
+    container_name: simulator
+    environment:
+      CRUD_API_URL: http://crud-api:8000
+      ECOMMERCE_API_URL: http://ecommerce-api:8000
+    volumes:
+      - ./simulator/config.yaml:/app/config.yaml
+    networks:
+      - analytics_network
+    depends_on:
+      crud-api:
+        condition: service_healthy
+      ecommerce-api:
+        condition: service_healthy
+    restart: "no"  # Only run when explicitly started
+
+volumes:
+  clickhouse_data:
+  postgres_data:
+  grafana_data:
+
+networks:
+  analytics_network:
+    driver: bridge 
